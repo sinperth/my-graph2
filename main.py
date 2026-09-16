@@ -113,7 +113,6 @@ st.divider()
 st.header("그래프 1. 장르별 영화 편수")
 st.subheader("어떤 장르의 영화가 가장 많을까?")
 
-# 장르별 영화 편수 계산
 genre_counts = (
     df["genre"]
     .value_counts()
@@ -122,7 +121,6 @@ genre_counts = (
 
 genre_counts.columns = ["장르", "영화 편수"]
 
-# 도넛 그래프
 fig1 = px.pie(
     genre_counts,
     names="장르",
@@ -181,27 +179,22 @@ st.write(
     "칸의 크기는 총 관객 수를 나타냅니다."
 )
 
-# 트리맵에 사용할 데이터 준비
 treemap_df = df[
     ["genre", "movieNm", "total_audi"]
 ].copy()
 
-# 총 관객 수가 없는 행 제거
 treemap_df = treemap_df.dropna(
     subset=["movieNm", "total_audi"]
 )
 
-# 총 관객 수가 음수인 경우 제거
 treemap_df = treemap_df[
     treemap_df["total_audi"] >= 0
 ]
 
-# 영화명이 비어 있는 경우 제거
 treemap_df = treemap_df[
     treemap_df["movieNm"].astype(str).str.strip() != ""
 ]
 
-# 트리맵 생성
 fig2 = px.treemap(
     treemap_df,
     path=["genre", "movieNm"],
@@ -211,7 +204,6 @@ fig2 = px.treemap(
     custom_data=["movieNm", "total_audi"]
 )
 
-# 마우스를 올렸을 때 표시할 내용
 fig2.update_traces(
     hovertemplate=(
         "<b>영화명: %{customdata[0]}</b><br>"
@@ -240,6 +232,133 @@ st.text_area(
     "그래프 2 해석 메모",
     placeholder="이 그래프로 알 수 있는 것을 한 문장으로 적어 보세요.",
     key="graph2_memo",
+    height=80
+)
+
+
+st.divider()
+
+
+# ==================================================
+# 그래프 3. 총 관객 수 히스토그램
+# ==================================================
+
+st.header("그래프 3. 총 관객 수 히스토그램")
+st.subheader("영화들의 총 관객 수는 어느 구간에 몰려 있을까?")
+
+st.write(
+    "가로축은 영화의 총 관객 수, "
+    "세로축은 해당 구간에 속한 영화 편수입니다."
+)
+
+# 총 관객 수가 있는 데이터만 사용
+hist_df = df[
+    ["movieNm", "total_audi"]
+].copy()
+
+hist_df = hist_df.dropna(
+    subset=["movieNm", "total_audi"]
+)
+
+hist_df = hist_df[
+    hist_df["total_audi"] >= 0
+]
+
+# 히스토그램
+fig3 = px.histogram(
+    hist_df,
+    x="total_audi",
+    nbins=20,
+    title="영화별 총 관객 수 분포",
+    labels={
+        "total_audi": "총 관객 수",
+        "count": "영화 편수"
+    }
+)
+
+fig3.update_traces(
+    hovertemplate=(
+        "총 관객 구간: %{x}<br>"
+        "영화 편수: %{y}편"
+        "<extra></extra>"
+    )
+)
+
+fig3.update_layout(
+    height=550,
+    bargap=0.05,
+    xaxis_title="총 관객 수",
+    yaxis_title="영화 편수",
+    margin=dict(t=70, b=70, l=50, r=30)
+)
+
+st.plotly_chart(
+    fig3,
+    use_container_width=True
+)
+
+
+# --------------------------------------------------
+# 대부분의 영화가 몰려 있는 구간 계산
+# --------------------------------------------------
+
+if len(hist_df) > 0:
+
+    # 히스토그램과 같은 구간으로 나누기
+    counts, bin_edges = pd.cut(
+        hist_df["total_audi"],
+        bins=20,
+        include_lowest=True,
+        retbins=True
+    )
+
+    bin_counts = counts.value_counts().sort_index()
+
+    # 영화가 가장 많이 포함된 구간
+    most_common_bin = bin_counts.idxmax()
+    most_common_count = bin_counts.max()
+
+    lower_bound = most_common_bin.left
+    upper_bound = most_common_bin.right
+
+    # 가장 관객이 많은 영화
+    max_audience = hist_df["total_audi"].max()
+
+    top_movies = hist_df[
+        hist_df["total_audi"] == max_audience
+    ]
+
+    top_movie_names = top_movies["movieNm"].tolist()
+
+    top_movie_text = ", ".join(top_movie_names)
+
+    # 문구 출력
+    st.markdown("### 이 그래프로 알 수 있는 것")
+
+    st.info(
+        f"대부분의 영화는 총 관객 "
+        f"{lower_bound:,.0f}명 이상 "
+        f"{upper_bound:,.0f}명 이하 구간에 몰려 있습니다. "
+        f"이 구간에는 {most_common_count:,}편의 영화가 있습니다."
+    )
+
+    st.success(
+        f"총 관객이 가장 많은 영화는 "
+        f"**{top_movie_text}**이며, "
+        f"총 관객은 **{max_audience:,.0f}명**입니다."
+    )
+
+else:
+
+    st.warning(
+        "총 관객 수 데이터가 없어 분포를 계산할 수 없습니다."
+    )
+
+
+st.text_area(
+    "그래프 3 해석 메모",
+    placeholder="이 그래프로 알 수 있는 것을 한 문장으로 적어 보세요.",
+    key="graph3_memo",
     height=80
 )
 
