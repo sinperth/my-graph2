@@ -251,7 +251,6 @@ st.write(
     "세로축은 해당 구간에 속한 영화 편수입니다."
 )
 
-# 총 관객 수가 있는 데이터만 사용
 hist_df = df[
     ["movieNm", "total_audi"]
 ].copy()
@@ -264,7 +263,6 @@ hist_df = hist_df[
     hist_df["total_audi"] >= 0
 ]
 
-# 히스토그램
 fig3 = px.histogram(
     hist_df,
     x="total_audi",
@@ -297,14 +295,9 @@ st.plotly_chart(
     use_container_width=True
 )
 
-
-# --------------------------------------------------
 # 대부분의 영화가 몰려 있는 구간 계산
-# --------------------------------------------------
-
 if len(hist_df) > 0:
 
-    # 히스토그램과 같은 구간으로 나누기
     counts, bin_edges = pd.cut(
         hist_df["total_audi"],
         bins=20,
@@ -314,14 +307,12 @@ if len(hist_df) > 0:
 
     bin_counts = counts.value_counts().sort_index()
 
-    # 영화가 가장 많이 포함된 구간
     most_common_bin = bin_counts.idxmax()
     most_common_count = bin_counts.max()
 
     lower_bound = most_common_bin.left
     upper_bound = most_common_bin.right
 
-    # 가장 관객이 많은 영화
     max_audience = hist_df["total_audi"].max()
 
     top_movies = hist_df[
@@ -332,7 +323,6 @@ if len(hist_df) > 0:
 
     top_movie_text = ", ".join(top_movie_names)
 
-    # 문구 출력
     st.markdown("### 이 그래프로 알 수 있는 것")
 
     st.info(
@@ -354,11 +344,104 @@ else:
         "총 관객 수 데이터가 없어 분포를 계산할 수 없습니다."
     )
 
-
 st.text_area(
     "그래프 3 해석 메모",
     placeholder="이 그래프로 알 수 있는 것을 한 문장으로 적어 보세요.",
     key="graph3_memo",
+    height=80
+)
+
+
+st.divider()
+
+
+# ==================================================
+# 그래프 4. 개봉일 스크린수와 총 관객의 관계
+# ==================================================
+
+st.header("그래프 4. 개봉일 스크린수와 총 관객의 관계")
+st.subheader("개봉일 스크린수가 많으면 총 관객도 많을까?")
+
+st.write(
+    "영화마다 개봉일 스크린수와 총 관객 수를 점으로 표시합니다. "
+    "장르별로 점 색을 다르게 했습니다."
+)
+
+# 산점도에 사용할 데이터
+scatter_df = df[
+    ["movieNm", "genre", "first_scrn", "total_audi"]
+].copy()
+
+scatter_df = scatter_df.dropna(
+    subset=[
+        "movieNm",
+        "genre",
+        "first_scrn",
+        "total_audi"
+    ]
+)
+
+# 스크린수와 관객수가 음수인 데이터 제외
+scatter_df = scatter_df[
+    (scatter_df["first_scrn"] >= 0)
+    & (scatter_df["total_audi"] >= 0)
+]
+
+# 산점도
+fig4 = px.scatter(
+    scatter_df,
+    x="first_scrn",
+    y="total_audi",
+    color="genre",
+    hover_name="movieNm",
+    title="개봉일 스크린수와 총 관객의 관계",
+    labels={
+        "first_scrn": "개봉일 스크린수",
+        "total_audi": "총 관객 수",
+        "genre": "장르"
+    },
+    custom_data=["movieNm", "genre"]
+)
+
+# 마우스를 올렸을 때 영화명 표시
+fig4.update_traces(
+    hovertemplate=(
+        "<b>영화명: %{customdata[0]}</b><br>"
+        "장르: %{customdata[1]}<br>"
+        "개봉일 스크린수: %{x:,}개<br>"
+        "총 관객: %{y:,}명"
+        "<extra></extra>"
+    ),
+    marker=dict(
+        size=10,
+        opacity=0.75
+    )
+)
+
+fig4.update_layout(
+    height=650,
+    xaxis_title="개봉일 스크린수",
+    yaxis_title="총 관객 수",
+    legend_title="장르",
+    margin=dict(t=70, b=70, l=60, r=30)
+)
+
+st.plotly_chart(
+    fig4,
+    use_container_width=True
+)
+
+st.markdown("### 이 그래프로 알 수 있는 것")
+
+st.info(
+    "개봉일 스크린수와 총 관객 수의 관계를 살펴보고, "
+    "장르별 영화들의 분포를 비교할 수 있습니다."
+)
+
+st.text_area(
+    "그래프 4 해석 메모",
+    placeholder="이 그래프로 알 수 있는 것을 한 문장으로 적어 보세요.",
+    key="graph4_memo",
     height=80
 )
 
@@ -373,6 +456,6 @@ st.divider()
 st.header("다음 그래프")
 
 st.write(
-    "앞으로 영화 관객 수의 분포, 개봉일 스크린수와 관객 수의 관계 등 "
+    "앞으로 영화 관객 수의 분포, 개봉일 상영횟수와 관객 수의 관계 등 "
     "새로운 그래프를 이곳에 추가할 수 있습니다."
 )
