@@ -367,7 +367,6 @@ st.write(
     "장르별로 점 색을 다르게 했습니다."
 )
 
-# 산점도에 사용할 데이터
 scatter_df = df[
     ["movieNm", "genre", "first_scrn", "total_audi"]
 ].copy()
@@ -381,13 +380,11 @@ scatter_df = scatter_df.dropna(
     ]
 )
 
-# 스크린수와 관객수가 음수인 데이터 제외
 scatter_df = scatter_df[
     (scatter_df["first_scrn"] >= 0)
     & (scatter_df["total_audi"] >= 0)
 ]
 
-# 산점도
 fig4 = px.scatter(
     scatter_df,
     x="first_scrn",
@@ -403,7 +400,6 @@ fig4 = px.scatter(
     custom_data=["movieNm", "genre"]
 )
 
-# 마우스를 올렸을 때 영화명 표시
 fig4.update_traces(
     hovertemplate=(
         "<b>영화명: %{customdata[0]}</b><br>"
@@ -442,6 +438,106 @@ st.text_area(
     "그래프 4 해석 메모",
     placeholder="이 그래프로 알 수 있는 것을 한 문장으로 적어 보세요.",
     key="graph4_memo",
+    height=80
+)
+
+
+st.divider()
+
+
+# ==================================================
+# 그래프 5. 장르별 총 관객 상자 그림
+# ==================================================
+
+st.header("그래프 5. 장르별 총 관객 상자 그림")
+st.subheader("장르별 총 관객 수의 분포는 어떻게 다를까?")
+
+st.write(
+    "영화가 10편 이상인 장르만 골라 비교합니다. "
+    "상자 밖으로 튀어나온 점은 해당 장르의 다른 영화들과 비교해 "
+    "상대적으로 멀리 떨어진 관측값입니다."
+)
+
+# 박스플롯에 사용할 데이터
+box_df = df[
+    ["genre", "movieNm", "total_audi"]
+].copy()
+
+box_df = box_df.dropna(
+    subset=["genre", "movieNm", "total_audi"]
+)
+
+box_df = box_df[
+    box_df["total_audi"] >= 0
+]
+
+# 영화가 10편 이상인 장르만 선택
+genre_movie_counts = (
+    box_df["genre"]
+    .value_counts()
+)
+
+valid_genres = genre_movie_counts[
+    genre_movie_counts >= 10
+].index
+
+box_df = box_df[
+    box_df["genre"].isin(valid_genres)
+]
+
+# 박스플롯
+fig5 = px.box(
+    box_df,
+    x="genre",
+    y="total_audi",
+    color="genre",
+    points="outliers",
+    title="영화가 10편 이상인 장르별 총 관객 분포",
+    labels={
+        "genre": "장르",
+        "total_audi": "총 관객 수"
+    },
+    custom_data=["movieNm", "genre"]
+)
+
+# 상자 밖 이상치에 마우스를 올렸을 때 영화명 표시
+fig5.update_traces(
+    hovertemplate=(
+        "<b>영화명: %{customdata[0]}</b><br>"
+        "장르: %{customdata[1]}<br>"
+        "총 관객: %{y:,}명"
+        "<extra></extra>"
+    ),
+    marker=dict(
+        size=9,
+        opacity=0.8
+    )
+)
+
+fig5.update_layout(
+    height=650,
+    showlegend=False,
+    xaxis_title="장르",
+    yaxis_title="총 관객 수",
+    margin=dict(t=70, b=70, l=60, r=30)
+)
+
+st.plotly_chart(
+    fig5,
+    use_container_width=True
+)
+
+st.markdown("### 이 그래프로 알 수 있는 것")
+
+st.info(
+    "영화가 10편 이상인 장르들의 총 관객 수 분포와 "
+    "상대적으로 멀리 떨어진 영화들을 비교할 수 있습니다."
+)
+
+st.text_area(
+    "그래프 5 해석 메모",
+    placeholder="이 그래프로 알 수 있는 것을 한 문장으로 적어 보세요.",
+    key="graph5_memo",
     height=80
 )
 
