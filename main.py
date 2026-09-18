@@ -440,7 +440,7 @@ st.plotly_chart(
 st.markdown("### 이 그래프로 알 수 있는 것")
 
 st.info(
-    ""스크린 수가 많을수록 총관객수도 많다"
+    "스크린 수가 많을수록 총관객수도 많다"
 )
 
 st.text_area(
