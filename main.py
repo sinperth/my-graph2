@@ -555,3 +555,269 @@ st.write(
     "앞으로 영화 관객 수의 분포, 개봉일 상영횟수와 관객 수의 관계 등 "
     "새로운 그래프를 이곳에 추가할 수 있습니다."
 )
+
+# ==================================================
+# 그래프 6. 첫 주 관객을 크기로 나타낸 버블 그래프
+# ==================================================
+
+st.header("그래프 6. 첫 주 관객을 크기로 나타낸 버블 그래프")
+st.subheader("첫 주 관객이 많은 영화는 어떤 위치에 있을까?")
+
+st.write(
+    "가로축은 개봉일 스크린수, 세로축은 총 관객 수입니다. "
+    "버블의 크기는 개봉 첫 주 관객 수를 나타내며, 장르별로 색을 다르게 했습니다."
+)
+
+# 버블 그래프에 사용할 데이터
+bubble_df = df[
+    [
+        "movieNm",
+        "genre",
+        "first_scrn",
+        "total_audi",
+        "first_week_audi"
+    ]
+].copy()
+
+bubble_df = bubble_df.dropna(
+    subset=[
+        "movieNm",
+        "genre",
+        "first_scrn",
+        "total_audi",
+        "first_week_audi"
+    ]
+)
+
+# 음수 데이터 제외
+bubble_df = bubble_df[
+    (bubble_df["first_scrn"] >= 0)
+    & (bubble_df["total_audi"] >= 0)
+    & (bubble_df["first_week_audi"] >= 0)
+]
+
+# 버블 그래프
+fig6 = px.scatter(
+    bubble_df,
+    x="first_scrn",
+    y="total_audi",
+    size="first_week_audi",
+    color="genre",
+    hover_name="movieNm",
+    title="개봉일 스크린수와 총 관객의 관계 - 첫 주 관객 버블",
+    labels={
+        "first_scrn": "개봉일 스크린수",
+        "total_audi": "총 관객 수",
+        "first_week_audi": "개봉 첫 주 관객",
+        "genre": "장르"
+    },
+    custom_data=[
+        "movieNm",
+        "genre",
+        "first_week_audi"
+    ],
+    size_max=60
+)
+
+# 마우스를 올렸을 때 표시할 내용
+fig6.update_traces(
+    hovertemplate=(
+        "<b>영화명: %{customdata[0]}</b><br>"
+        "장르: %{customdata[1]}<br>"
+        "개봉일 스크린수: %{x:,}개<br>"
+        "총 관객: %{y:,}명<br>"
+        "개봉 첫 주 관객: %{customdata[2]:,}명"
+        "<extra></extra>"
+    ),
+    marker=dict(
+        opacity=0.7,
+        line=dict(width=1)
+    )
+)
+
+fig6.update_layout(
+    height=700,
+    xaxis_title="개봉일 스크린수",
+    yaxis_title="총 관객 수",
+    legend_title="장르",
+    margin=dict(t=70, b=70, l=60, r=30)
+)
+
+st.plotly_chart(
+    fig6,
+    use_container_width=True
+)
+
+st.markdown("### 이 그래프로 알 수 있는 것")
+
+st.info(
+    "개봉일 스크린수와 총 관객 수의 관계를 보면서 "
+    "개봉 첫 주 관객이 많은 영화가 버블의 크기로 어떻게 나타나는지 비교할 수 있습니다."
+)
+
+st.text_area(
+    "그래프 6 해석 메모",
+    placeholder="이 그래프로 알 수 있는 것을 한 문장으로 적어 보세요.",
+    key="graph6_memo",
+    height=80
+)
+
+st.divider()
+
+# ==================================================
+# 그래프 7. 제작 국가 → 장르 선버스트
+# ==================================================
+
+st.header("그래프 7. 제작 국가에서 장르로 내려가는 선버스트")
+st.subheader("어떤 나라에서 어떤 장르의 영화가 많이 만들어졌을까?")
+
+st.write(
+    "바깥쪽으로 갈수록 세부 장르를 나타냅니다. "
+    "각 칸의 크기는 해당 제작 국가와 장르에 속하는 영화 편수를 나타냅니다."
+)
+
+sunburst_df = df[
+    ["nation", "genre", "movieNm"]
+].copy()
+
+sunburst_df = sunburst_df.dropna(
+    subset=["nation", "genre", "movieNm"]
+)
+
+sunburst_df["nation"] = sunburst_df["nation"].astype(str).str.strip()
+sunburst_df["genre"] = sunburst_df["genre"].astype(str).str.strip()
+sunburst_df["movieNm"] = sunburst_df["movieNm"].astype(str).str.strip()
+
+sunburst_df = sunburst_df[
+    (sunburst_df["nation"] != "")
+    & (sunburst_df["genre"] != "")
+    & (sunburst_df["movieNm"] != "")
+    & (sunburst_df["nation"].str.lower() != "nan")
+    & (sunburst_df["genre"].str.lower() != "nan")
+]
+
+# 제작 국가 × 장르별 영화 편수 계산
+sunburst_counts = (
+    sunburst_df
+    .groupby(["nation", "genre"])
+    .size()
+    .reset_index(name="영화 편수")
+)
+
+fig7 = px.sunburst(
+    sunburst_counts,
+    path=["nation", "genre"],
+    values="영화 편수",
+    title="제작 국가 → 장르별 영화 편수",
+    custom_data=["영화 편수"]
+)
+
+fig7.update_traces(
+    hovertemplate=(
+        "<b>%{label}</b><br>"
+        "영화 편수: %{value}편"
+        "<extra></extra>"
+    )
+)
+
+fig7.update_layout(
+    height=700,
+    margin=dict(t=70, b=40, l=30, r=30)
+)
+
+st.plotly_chart(
+    fig7,
+    use_container_width=True
+)
+
+st.markdown("### 이 그래프로 알 수 있는 것")
+
+st.text_area(
+    "그래프 7 해석 메모",
+    placeholder="이 그래프로 알 수 있는 것을 한 문장으로 적어 보세요.",
+    key="graph7_memo",
+    height=80
+)
+
+st.divider()
+
+# ==================================================
+# 그래프 8. 개봉 첫 주 관객이 많으면 총 관객수도 많을까?
+# ==================================================
+
+st.header("그래프 8. 개봉 첫 주 관객이 많으면 총 관객수도 많을까?")
+
+st.write(
+    "가로축은 개봉 첫 주 관객, 세로축은 총 관객 수입니다. "
+    "각 점에 마우스를 올리면 영화명을 확인할 수 있습니다."
+)
+
+scatter8_df = df[
+    [
+        "movieNm",
+        "first_week_audi",
+        "total_audi"
+    ]
+].copy()
+
+scatter8_df = scatter8_df.dropna(
+    subset=[
+        "movieNm",
+        "first_week_audi",
+        "total_audi"
+    ]
+)
+
+scatter8_df = scatter8_df[
+    (scatter8_df["movieNm"].astype(str).str.strip() != "")
+    & (scatter8_df["first_week_audi"] >= 0)
+    & (scatter8_df["total_audi"] >= 0)
+]
+
+fig8 = px.scatter(
+    scatter8_df,
+    x="first_week_audi",
+    y="total_audi",
+    hover_name="movieNm",
+    title="개봉 첫 주 관객이 많으면 총 관객수도 많을까?",
+    labels={
+        "first_week_audi": "개봉 첫 주 관객",
+        "total_audi": "총 관객 수"
+    }
+)
+
+fig8.update_traces(
+    marker=dict(
+        size=10,
+        opacity=0.75
+    ),
+    hovertemplate=(
+        "<b>%{hovertext}</b><br>"
+        "개봉 첫 주 관객: %{x:,}명<br>"
+        "총 관객: %{y:,}명"
+        "<extra></extra>"
+    )
+)
+
+fig8.update_layout(
+    height=650,
+    xaxis_title="개봉 첫 주 관객",
+    yaxis_title="총 관객 수",
+    margin=dict(t=70, b=70, l=60, r=30)
+)
+
+st.plotly_chart(
+    fig8,
+    use_container_width=True
+)
+
+st.markdown("### 이 그래프로 알 수 있는 것")
+
+st.text_area(
+    "그래프 8 해석 메모",
+    placeholder="이 그래프로 알 수 있는 것을 한 문장으로 적어 보세요.",
+    key="graph8_memo",
+    height=80
+)
+
+st.divider()
