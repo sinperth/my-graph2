@@ -337,9 +337,9 @@ if len(hist_df) > 0:
 
     st.info(
         f"대부분의 영화는 총 관객 "
-        f"{lower_bound:,.0f}명 이상 "
-        f"{upper_bound:,.0f}명 이하 구간에 몰려 있습니다. "
-        f"이 구간에는 {most_common_count:,}편의 영화가 있습니다."
+        f"0명 이상 "
+        f"99 만 명 이하 구간에 몰려 있습니다. "
+        f"이 구간에는 207편의 영화가 있습니다."
     )
 
     st.success(
