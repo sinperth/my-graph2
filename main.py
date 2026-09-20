@@ -742,6 +742,10 @@ st.plotly_chart(
 
 st.markdown("### 이 그래프로 알 수 있는 것")
 
+st.info(
+    "각 나라마다 어떤 장르가 많이 만들었는지 알 수있습니다."
+)
+
 st.text_area(
     "그래프 7 해석 메모",
     placeholder="이 그래프로 알 수 있는 것을 한 문장으로 적어 보세요.",
